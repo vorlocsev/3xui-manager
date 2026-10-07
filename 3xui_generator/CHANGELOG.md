@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.2.1
+
+- Restored the full management API surface from v4.1.
+- Fixed existing-client VLESS link generation so it never creates a duplicate inbound/client.
+- Added existing-client link and subscription endpoint.
+- Fixed Reality X25519 generation to use the current 3x-ui GET endpoint.
+- Added inbound update, client update, cleanup and management helpers.
+- Added QR generation for existing clients.
+- Kept API credentials server-side.
+
 ## 4.2.0
 
 - Updated for current Home Assistant App repository/build model.
