@@ -236,6 +236,77 @@ def existing_link(email):
     sub = f"{SUB_BASE}/{qpath(c.get('subId'))}" if SUB_BASE and c.get("subId") else None
     return jsonify({"success": True, "link": link, "subscription": sub, "client": c, "inbound": ib})
 
+@app.post("/api/inbounds/create")
+def inbound_create():
+    p = request.get_json(silent=True) or {}
+    address = str(p.get("server_address") or SERVER_ADDRESS).strip()
+    sni, dest = str(p.get("sni","")).strip(), str(p.get("dest","")).strip()
+    if not address or not sni or not dest:
+        return jsonify({"success":False,"msg":"server address, SNI and destination are required"}),400
+    private, public = reality_keys()
+    sid = secrets.token_hex(8)
+    inbound = {
+        "remark": p.get("remark") or "VLESS Reality",
+        "enable": True,
+        "listen": "",
+        "port": int(p.get("port") or 443),
+        "protocol": "vless",
+        "expiryTime": 0,
+        "total": 0,
+        "settings": {"clients": [], "decryption": "none", "fallbacks": []},
+        "streamSettings": {"network":"tcp","security":"reality","realitySettings":{
+            "show":False,"xver":0,"dest":dest,"serverNames":[sni],"privateKey":private,
+            "shortIds":[sid],"settings":{"publicKey":public,"fingerprint":p.get("fingerprint","chrome"),"serverName":sni,"spiderX":"/"}}},
+        "sniffing":{"enabled":True,"destOverride":["http","tls","quic"],"metadataOnly":False,"routeOnly":False}
+    }
+    added = obj(call("POST", "/panel/api/inbounds/add", json=inbound)) or {}
+    iid = added.get("id") or added.get("inboundId") or (added.get("inbound") or {}).get("id")
+    if not iid:
+        # 3x-ui may return only a success message; resolve the newly created inbound by port/remark.
+        rows = [normalize(x) for x in (obj(call("GET", "/panel/api/inbounds/list")) or [])]
+        matches = [x for x in rows if int(x.get("port",0) or 0) == int(inbound["port"]) and x.get("remark") == inbound["remark"]]
+        if len(matches) == 1:
+            iid = matches[0].get("id")
+    if not iid:
+        raise RuntimeError("Inbound created but ID was not returned")
+    return jsonify({"success":True,"inbound":find_inbound(int(iid))})
+
+@app.post("/api/clients/create")
+def client_create():
+    p = request.get_json(silent=True) or {}
+    email = str(p.get("email","")).strip()
+    address = str(p.get("server_address") or SERVER_ADDRESS).strip()
+    iid = int(p.get("inbound_id") or 0)
+    if not email or not address or not iid:
+        return jsonify({"success":False,"msg":"email, server address and inbound are required"}),400
+    ib = find_inbound(iid)
+    if not ib:
+        raise RuntimeError("Inbound not found")
+    existing = None
+    try:
+        existing = find_client(email)
+    except Exception:
+        existing = None
+    attached = (existing or {}).get("inboundIds") or []
+    if existing and iid in [int(x) for x in attached]:
+        raise RuntimeError("Client with this email is already attached to this inbound")
+    client = {
+        "id": new_uuid(),
+        "email": email,
+        "flow": p.get("flow","xtls-rprx-vision"),
+        "totalGB": int(float(p.get("total_gb",0) or 0) * 1024**3),
+        "expiryTime": 0 if int(p.get("days",0) or 0) <= 0 else int((time.time()+int(p["days"])*86400)*1000),
+        "enable": True,
+        "limitIp": int(p.get("ip_limit",0) or 0),
+        "limitHwid": int(p.get("hwid_limit",0) or 0)
+    }
+    call("POST", "/panel/api/clients/add", json={"client":client,"inboundIds":[iid]})
+    c = find_client(email)
+    ib = find_inbound(iid)
+    link = vless_link(c, ib, address)
+    sub = f"{SUB_BASE}/{qpath(c.get('subId'))}" if SUB_BASE and c.get("subId") else None
+    return jsonify({"success":True,"client":c,"inbound":ib,"link":link,"subscription":sub})
+
 @app.post("/api/generate")
 def generate():
     p = request.get_json(silent=True) or {}
