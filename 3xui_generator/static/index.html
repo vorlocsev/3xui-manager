@@ -2,102 +2,60 @@
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>3x-ui Manager</title>
 <style>
-body{font:14px system-ui;max-width:1250px;margin:auto;padding:16px;background:#111;color:#eee}
-section{background:#1d1d1d;padding:16px;margin:12px 0;border-radius:12px}
-button,input{padding:8px;border-radius:7px;border:1px solid #555;background:#111;color:#eee;margin:3px}
-button{cursor:pointer;background:#3478f6;border:0}button:disabled{opacity:.45;cursor:not-allowed}button.d{background:#a33}button.s{background:#555}
-table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
-#msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
+:root{color-scheme:dark}
+body{font:15px system-ui,-apple-system,sans-serif;max-width:1050px;margin:auto;padding:14px;background:#111;color:#eee}
+section{background:#1b1b1b;padding:14px;margin:10px 0;border-radius:12px}
+h1{font-size:22px;margin:4px 0 14px}h2{font-size:18px;margin:0 0 10px}
+button,input,select{padding:9px;border-radius:8px;border:1px solid #4a4a4a;background:#111;color:#eee;margin:3px}
+button{cursor:pointer;background:#3478f6;border:0}button:disabled{opacity:.45;cursor:not-allowed}
+button.s{background:#555}button.d{background:#a33}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.status{margin-left:auto}
+.client{background:#242424;border-radius:12px;padding:12px;margin:8px 0}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.name{font-weight:650;font-size:16px;overflow-wrap:anywhere}.presence{font-size:13px;white-space:nowrap}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#777;margin-right:5px}.online .dot{background:#39d353}.online{color:#72e28a}.offline{color:#aaa}
+.meta{color:#aaa;font-size:13px;margin:6px 0}.actions{display:flex;gap:5px;flex-wrap:wrap}
+.linkbox{display:none;margin-top:9px;padding:9px;background:#111;border-radius:8px;word-break:break-all;color:#bbb;font-size:12px}
+.ibrow{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #333;flex-wrap:wrap}
+#msg{white-space:pre-wrap}.ok{color:#72e28a}.bad{color:#ff7777}
+small{color:#999}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.3.1</small></h1>
-<section><button onclick="load()">Обновить</button> <button onclick="newInbound()">+ Создать inbound</button> <button onclick="newClient()">+ Добавить клиента</button> <button onclick="newSetup()">+ Inbound + клиент</button>
-<button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
+<h1>3x-ui Manager <small>v4.4.0</small></h1>
+<section><div class="toolbar">
+<button onclick="load()">Обновить</button>
+<button onclick="newClient()">+ Клиент</button>
+<button onclick="newSetup()">+ Inbound + клиент</button>
+<button class="s" onclick="newInbound()">Inbound</button>
+<span id="st" class="status"></span>
+</div></section>
+<section><h2>Клиенты <small id="count"></small></h2><div id="cl">Загрузка…</div></section>
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
-<section><h2>Клиенты</h2><div id="cl">Загрузка…</div></section>
 <section id="msg"></section>
 <script>
 const $=x=>document.getElementById(x),esc=x=>String(x??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-async function api(u,o){
- if(u.startsWith('/'))u=u.slice(1);
- let r=await fetch(u,o);
- let t=await r.text();
- let d;
- try{d=JSON.parse(t)}catch(e){throw Error('HTTP '+r.status+': '+t.slice(0,500))}
- if(!r.ok||d.success===false)throw Error(d.msg||r.status);
- return d
-}
+const enc=encodeURIComponent,links={};
+async function api(u,o){if(u.startsWith('/'))u=u.slice(1);let r=await fetch(u,o),t=await r.text(),d;try{d=JSON.parse(t)}catch(e){throw Error('HTTP '+r.status+': '+t.slice(0,400))}if(!r.ok||d.success===false)throw Error(d.msg||r.status);return d}
 function out(x){$('msg').textContent=x||''}
-async function load(){
- try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}
- try{let d=await api('/api/inbounds'),a=d.obj||[];$('ib').innerHTML='<table><tr><th>ID</th><th>Название</th><th>Port</th><th>Клиенты</th><th>State</th><th></th></tr>'+a.map(x=>{let n=(x.settings?.clients||[]).length;return '<tr><td>'+x.id+'</td><td>'+esc(x.remark)+'</td><td>'+x.port+'</td><td>'+n+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td><button onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="resetib('+x.id+')">Сброс</button> <button class="d" onclick="delib('+x.id+')">Удалить</button></td></tr>'}).join('')+'</table>'}catch(e){$('ib').textContent=e.message}
- try{let d=await api('/api/clients'),a=d.obj||[];$('cl').innerHTML='<table><tr><th>Email</th><th>State</th><th>Traffic</th><th>Expiry</th><th></th></tr>'+a.map(x=>'<tr><td>'+esc(x.email)+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td>'+((Number(x.traffic?.up||x.up||0)+Number(x.traffic?.down||x.down||0))/1073741824).toFixed(2)+' GB</td><td>'+expiry(x.expiryTime)+'</td><td><button onclick="ce('+JSON.stringify(encodeURIComponent(x.email))+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="link('+JSON.stringify(encodeURIComponent(x.email))+')">VLESS</button> <button onclick="ips('+JSON.stringify(encodeURIComponent(x.email))+')">IP</button> <button onclick="hwids('+JSON.stringify(encodeURIComponent(x.email))+')">HWID</button> <button onclick="resetc('+JSON.stringify(encodeURIComponent(x.email))+')">Сброс</button> <button class="d" onclick="delc('+JSON.stringify(encodeURIComponent(x.email))+')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('cl').textContent=e.message}
-}
-function expiry(v){if(!v)return '—';let d=new Date(Number(v));return isNaN(d)?'—':d.toLocaleString()}
-async function action(fn){try{await fn();load()}catch(e){out('Ошибка: '+e.message)}}
-async function en(id,v){await action(()=>api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})}))}
-async function resetib(id){if(confirm('Сбросить трафик inbound?'))await action(()=>api('/api/inbounds/'+id+'/reset-traffic',{method:'POST'}))}
-async function delib(id){if(confirm('Удалить inbound?'))await action(()=>api('/api/inbounds/'+id,{method:'DELETE'}))}
-async function ce(e,v){await action(()=>api('/api/clients/'+e+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})}))}
-async function resetc(e){if(confirm('Сбросить трафик клиента?'))await action(()=>api('/api/clients/'+e+'/reset-traffic',{method:'POST'}))}
-async function delc(e){if(confirm('Удалить клиента?'))await action(()=>api('/api/clients/'+e,{method:'DELETE'}))}
-async function ips(e){await action(async()=>{let d=await api('/api/clients/'+e+'/ips',{method:'POST'});out('IP клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))})}
-async function hwids(e){await action(async()=>{let d=await api('/api/clients/'+e+'/hwids',{method:'POST'});out('HWID клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))})}
-async function link(e){
- try{
-  let d=await api('/api/clients/'+e+'/link'); let text='VLESS:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:'');
-  let q=await api('/api/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({link:d.link})});
-  out(text+'\n\nQR:');
-  let img=document.createElement('img');img.src='data:image/png;base64,'+q.png_base64;img.style.maxWidth='320px';$('msg').appendChild(document.createElement('br'));$('msg').appendChild(img);
- }catch(err){out(err.message)}
-}
-async function cleanup(){if(confirm('Удалить depleted и orphan клиентов?')){await api('/api/clients/del-depleted',{method:'POST'});await api('/api/clients/del-orphans',{method:'POST'});load()}}
-async function newInbound(){
- $('msg').innerHTML='<h3>Создать VLESS Reality inbound</h3><input id="ir" placeholder="Название" value="VLESS Reality"><input id="ip" type="number" value="443" placeholder="Порт"><input id="is" placeholder="SNI"><input id="id" placeholder="Destination, например www.cloudflare.com:443"><button id="createIbBtn" onclick="createInbound()">Создать</button>';
-}
-async function createInbound(){
- const b=$('createIbBtn'); if(b)b.disabled=true;
- try{
-  let p={remark:$('ir').value,port:Number($('ip').value),sni:$('is').value,dest:$('id').value};
-  if(!p.remark||!p.port||!p.sni||!p.dest)throw Error('Заполни все поля');
-  let d=await api('/api/inbounds/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-  out('Inbound создан: #'+d.inbound.id+' '+d.inbound.remark+'\n\nКнопка отключена, чтобы не создать дубликат.');load();
- }catch(e){if(b)b.disabled=false;out('Ошибка создания inbound: '+e.message)}
-}
-async function newClient(){
- try{
-  let d=await api('/api/inbounds'), a=(d.obj||[]).filter(x=>x.protocol==='vless'&&(x.streamSettings?.security==='reality'||x.streamSettings?.realitySettings));
-  if(!a.length){out('Сначала создай VLESS Reality inbound');return}
-  let opts=a.map(x=>'<option value="'+x.id+'">'+esc(x.remark)+' — '+x.port+'</option>').join('');
-  $('msg').innerHTML='<h3>Добавить клиента</h3><select id="ci">'+opts+'</select><input id="ce" placeholder="Email клиента"><select id="cg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="cgCustom" type="number" min="0" step="1" placeholder="Или свой лимит, GB"><button id="createClBtn" onclick="createClient()">Создать клиента</button>';
- }catch(e){out('Ошибка: '+e.message)}
-}
-async function createClient(){
- try{
-  const b=$('createClBtn'); if(b)b.disabled=true;
-  let email=$('ce').value.trim(),iid=Number($('ci').value),custom=Number($('cgCustom').value),gb=custom>0?custom:Number($('cg').value);
-  if(!email)throw Error('Укажи email');
-  let cfg=await api('/api/settings'), address=cfg.server_address||prompt('Server address / domain');
-  if(!address)throw Error('Не указан server address');
-  let d=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,inbound_id:iid,total_gb:gb,server_address:address})});
-  out('Клиент создан:\n'+d.link);load();
- }catch(e){if($('createClBtn'))$('createClBtn').disabled=false;out('Ошибка создания клиента: '+e.message)}
-}
-async function newSetup(){
- $('msg').innerHTML='<h3>Создать inbound + клиента</h3><input id="sr" placeholder="Название inbound" value="VLESS Reality"><input id="sp" type="number" value="443" placeholder="Порт"><input id="ss" placeholder="SNI"><input id="sd" placeholder="Destination, например www.cloudflare.com:443"><input id="se" placeholder="Email клиента"><select id="sg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="sgc" type="number" min="0" step="1" placeholder="Или свой лимит, GB"><button id="setupBtn" onclick="createSetup()">Создать inbound + клиента</button>';
-}
-async function createSetup(){
- const b=$('setupBtn'); if(b)b.disabled=true;
- try{
-  let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');
-  if(!address)throw Error('Не указан server address');
-  let custom=Number($('sgc').value),gb=custom>0?custom:Number($('sg').value);
-  let p={remark:$('sr').value,port:Number($('sp').value),sni:$('ss').value,dest:$('sd').value,email:$('se').value,total_gb:gb,server_address:address};
-  if(!p.remark||!p.port||!p.sni||!p.dest||!p.email)throw Error('Заполни все поля');
-  let d=await api('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
-  out('Inbound + клиент созданы\n\nVLESS:\n'+d.link);
-  let q=await api('/api/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({link:d.link})});
-  let img=document.createElement('img');img.src='data:image/png;base64,'+q.png_base64;img.style.maxWidth='320px';$('msg').appendChild(document.createElement('br'));$('msg').appendChild(img);load();
- }catch(e){if(b)b.disabled=false;out('Ошибка: '+e.message)}
-}
-load();
+function gb(x){return((Number(x?.traffic?.up||x?.up||0)+Number(x?.traffic?.down||x?.down||0))/1073741824).toFixed(2)}
+function expiry(v){if(!v)return'без срока';let d=new Date(Number(v));return isNaN(d)?'—':d.toLocaleString()}
+function ago(v){if(!v)return'';let n=Date.now()-Number(v)*1000;if(n<60000)return'только что';if(n<3600000)return Math.floor(n/60000)+' мин назад';if(n<86400000)return Math.floor(n/3600000)+' ч назад';return Math.floor(n/86400000)+' дн назад'}
+async function presence(){try{let d=await api('/api/clients/presence',{method:'POST'});return{online:new Set(d.online||[]),last:d.last_online||{}}}catch(e){return{online:new Set(),last:{}}}}
+async function loadClients(){let d=await api('/api/clients'),a=d.obj||[],p=await presence();$('count').textContent='— '+a.length;$('cl').innerHTML=a.length?a.map(x=>{let on=p.online.has(x.email),last=p.last[x.email],key=enc(x.email);return'<div class="client"><div class="row"><div class="name">'+esc(x.email)+'</div><div class="presence '+(on?'online':'offline')+'"><span class="dot"></span>'+(on?'ONLINE':'offline')+(on?'':' '+(ago(last)||''))+'</div></div><div class="meta">'+gb(x)+' GB использовано · '+(x.totalGB?((Number(x.totalGB)/1073741824).toFixed(0)+' GB лимит · '):'без лимита · ')+expiry(x.expiryTime)+'</div><div class="actions"><button onclick="copyLink('+JSON.stringify(x.email)+')">📋 Скопировать</button><button onclick="telegram('+JSON.stringify(x.email)+')">✈ Telegram</button><button onclick="showQr('+JSON.stringify(x.email)+')">▦ QR</button><button class="s" onclick="ce('+JSON.stringify(x.email)+','+(!x.enable)+')">'+(x.enable?'Выключить':'Включить')+'</button><button class="d" onclick="delc('+JSON.stringify(x.email)+')">Удалить</button></div><div class="linkbox" id="l_'+key+'"></div></div>'}).join(''):'<small>Клиентов пока нет.</small>'}
+async function loadInbounds(){let d=await api('/api/inbounds'),a=d.obj||[];$('ib').innerHTML=a.length?a.map(x=>'<div class="ibrow"><span><b>'+esc(x.remark)+'</b> · '+x.protocol+' : '+x.port+' · '+(x.enable?'ON':'OFF')+'</span><span><button class="s" onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button><button class="d" onclick="delib('+x.id+')">Удалить</button></span></div>').join(''):'<small>Inbound'ов нет.</small>'}
+async function load(){try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}try{await Promise.all([loadClients(),loadInbounds()])}catch(e){out('Ошибка: '+e.message)}}
+async function getLink(email){if(links[email])return links[email];let d=await api('/api/clients/'+enc(email)+'/link');links[email]=d.link;return d.link}
+async function copyLink(email){try{let l=await getLink(email);if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(l);else{let t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}out('Ссылка клиента '+email+' скопирована.')}catch(e){out('Ошибка: '+e.message)}}
+async function telegram(email){try{let l=await getLink(email);window.open('https://t.me/share/url?url='+encodeURIComponent(l)+'&text='+encodeURIComponent('VLESS для '+email),'_blank')}catch(e){out('Ошибка: '+e.message)}}
+async function showQr(email){try{let l=await getLink(email),q=await api('/api/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({link:l})}),b=$('l_'+enc(email));b.style.display='block';b.innerHTML='<b>VLESS</b><br>'+esc(l)+'<br><br><img alt="QR" style="width:240px;max-width:100%" src="data:image/png;base64,'+q.png_base64+'>'}catch(e){out('Ошибка: '+e.message)}}
+async function ce(email,v){try{await api('/api/clients/'+enc(email)+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}catch(e){out('Ошибка: '+e.message)}}
+async function delc(email){if(!confirm('Удалить клиента '+email+'?'))return;try{await api('/api/clients/'+enc(email),{method:'DELETE'});delete links[email];load()}catch(e){out('Ошибка: '+e.message)}}
+async function en(id,v){try{await api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});loadInbounds()}catch(e){out('Ошибка: '+e.message)}}
+async function delib(id){if(!confirm('Удалить inbound?'))return;try{await api('/api/inbounds/'+id,{method:'DELETE'});load()}catch(e){out('Ошибка: '+e.message)}}
+async function newInbound(){$('msg').innerHTML='<h3>Новый VLESS Reality</h3><input id="ir" placeholder="Название" value="VLESS Reality"><input id="ip" type="number" value="443" placeholder="Порт"><input id="is" placeholder="SNI"><input id="id" placeholder="Destination, например www.cloudflare.com:443"><button id="createIbBtn" onclick="createInbound()">Создать</button>'}
+async function createInbound(){let b=$('createIbBtn');b.disabled=true;try{let p={remark:$('ir').value,port:Number($('ip').value),sni:$('is').value,dest:$('id').value};if(!p.remark||!p.port||!p.sni||!p.dest)throw Error('Заполни все поля');await api('/api/inbounds/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});out('Inbound создан');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
+async function newClient(){try{let d=await api('/api/inbounds'),a=(d.obj||[]).filter(x=>x.protocol==='vless'&&(x.streamSettings?.security==='reality'||x.streamSettings?.realitySettings));if(!a.length){out('Сначала создай VLESS Reality inbound');return}let opts=a.map(x=>'<option value="'+x.id+'">'+esc(x.remark)+' — '+x.port+'</option>').join('');$('msg').innerHTML='<h3>Новый клиент</h3><select id="ci">'+opts+'</select><input id="ce" placeholder="Email клиента"><select id="cg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="cgCustom" type="number" min="0" placeholder="Свой лимит, GB"><button id="createClBtn" onclick="createClient()">Создать</button>'}catch(e){out('Ошибка: '+e.message)}}
+async function createClient(){let b=$('createClBtn');b.disabled=true;try{let email=$('ce').value.trim(),iid=Number($('ci').value),custom=Number($('cgCustom').value),gb=custom>0?custom:Number($('cg').value);if(!email)throw Error('Укажи email');let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let d=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,inbound_id:iid,total_gb:gb,server_address:address})});links[email]=d.link;out('Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
+async function newSetup(){$('msg').innerHTML='<h3>Inbound + клиент</h3><input id="sr" placeholder="Название inbound" value="VLESS Reality"><input id="sp" type="number" value="443"><input id="ss" placeholder="SNI"><input id="sd" placeholder="Destination, например www.cloudflare.com:443"><input id="se" placeholder="Email клиента"><select id="sg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="sgc" type="number" min="0" placeholder="Свой лимит, GB"><button id="setupBtn" onclick="createSetup()">Создать</button>'}
+async function createSetup(){let b=$('setupBtn');b.disabled=true;try{let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let custom=Number($('sgc').value),gb=custom>0?custom:Number($('sg').value),p={remark:$('sr').value,port:Number($('sp').value),sni:$('ss').value,dest:$('sd').value,email:$('se').value,total_gb:gb,server_address:address};if(!p.remark||!p.port||!p.sni||!p.dest||!p.email)throw Error('Заполни все поля');let d=await api('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});links[p.email]=d.link;out('Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
+load();setInterval(()=>loadClients().catch(()=>{}),15000);
 </script></body></html>
