@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.5.1 - 2026-10-08
+
+- Added a visible notification banner when a newer stable 3x-ui version is available.
+- Added optional browser notification permission for new 3x-ui releases.
+- Normalized leading `v` when comparing installed and available versions.
+- Bumped the Home Assistant App version to 4.5.1.
+
+
 All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
 
 ## 4.5.0 - 2026-10-08
