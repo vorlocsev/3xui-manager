@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.5.2 - 2026-10-08
+
+- Added an RU/EN language selector to the Home Assistant web interface.
+- Added persistent language selection using browser local storage.
+- Localized client, inbound, update and creation controls for Russian and English.
+- Bumped the Home Assistant App version to 4.5.2.
+
+
 ## 4.5.1 - 2026-10-08
 
 - Added a visible notification banner when a newer stable 3x-ui version is available.
