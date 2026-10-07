@@ -1,5 +1,5 @@
 name: 3x-ui Manager
-version: 4.2.2
+version: 4.2.3
 slug: 3xui_manager
 description: Home Assistant App for managing remote 3x-ui VLESS Reality inbounds, clients and subscriptions.
 url: https://github.com/vorlocsev/3xui-manager
@@ -16,7 +16,7 @@ ingress_entry: /
 panel_icon: mdi:vpn
 panel_title: 3x-ui Manager
 panel_admin: true
-watchdog: http://127.0.0.1:8099/health
+watchdog: http://[HOST]:[PORT:8099]/health
 backup: hot
 stage: stable
 options:
