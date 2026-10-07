@@ -1,19 +1,18 @@
-# v4.1.0
+# Changelog
 
-- Public-release cleanup: removed developer-specific maintainer/client placeholder data.
+## 4.2.0
+
+- Updated for current Home Assistant App repository/build model.
+- Removed legacy build.yaml.
+- Dockerfile is now the single source of truth for the base image and labels.
+- Added Home Assistant minimum version 2026.4.0.
+- Added English configuration translations.
+- Fixed optional configuration fields so they are not unnecessarily required.
+- Kept the 3x-ui API token server-side.
+- Prepared the repository for direct installation from GitHub.
+
+## 4.1.0
+
+- Public-release cleanup.
+- Removed developer-specific placeholder data.
 - Renamed the project to 3x-ui Manager.
-
-# v4.0.0
-
-- Full inbound management.
-- Full client/subscription management.
-- Client enable/disable.
-- Inbound enable/disable.
-- Edit inbound.
-- Edit client.
-- Delete inbound/client.
-- Reset inbound/client traffic.
-- Client IP and HWID inspection/cleanup.
-- Depleted/orphan cleanup.
-- VLESS/Reality link and QR from current server state.
-- API token remains server-side.
