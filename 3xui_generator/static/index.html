@@ -9,7 +9,7 @@ button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}butto
 table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
 #msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.2.5</small></h1>
+<h1>3x-ui Manager <small>v4.2.6</small></h1>
 <section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button>
 <button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
@@ -30,17 +30,18 @@ function out(x){$('msg').textContent=x||''}
 async function load(){
  try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}
  try{let d=await api('/api/inbounds'),a=d.obj||[];$('ib').innerHTML='<table><tr><th>ID</th><th>Название</th><th>Port</th><th>Клиенты</th><th>State</th><th></th></tr>'+a.map(x=>{let n=(x.settings?.clients||[]).length;return '<tr><td>'+x.id+'</td><td>'+esc(x.remark)+'</td><td>'+x.port+'</td><td>'+n+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td><button onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="resetib('+x.id+')">Сброс</button> <button class="d" onclick="delib('+x.id+')">Удалить</button></td></tr>'}).join('')+'</table>'}catch(e){$('ib').textContent=e.message}
- try{let d=await api('/api/clients'),a=d.obj||[];$('cl').innerHTML='<table><tr><th>Email</th><th>State</th><th>Traffic</th><th>Expiry</th><th></th></tr>'+a.map(x=>'<tr><td>'+esc(x.email)+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td>'+((Number(x.up||0)+Number(x.down||0))/1073741824).toFixed(2)+' GB</td><td>'+expiry(x.expiryTime)+'</td><td><button onclick="ce('+JSON.stringify(encodeURIComponent(x.email))+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="link('+JSON.stringify(encodeURIComponent(x.email))+')">VLESS</button> <button onclick="ips('+JSON.stringify(encodeURIComponent(x.email))+')">IP</button> <button onclick="hwids('+JSON.stringify(encodeURIComponent(x.email))+')">HWID</button> <button onclick="resetc('+JSON.stringify(encodeURIComponent(x.email))+')">Сброс</button> <button class="d" onclick="delc('+JSON.stringify(encodeURIComponent(x.email))+')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('cl').textContent=e.message}
+ try{let d=await api('/api/clients'),a=d.obj||[];$('cl').innerHTML='<table><tr><th>Email</th><th>State</th><th>Traffic</th><th>Expiry</th><th></th></tr>'+a.map(x=>'<tr><td>'+esc(x.email)+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td>'+((Number(x.traffic?.up||x.up||0)+Number(x.traffic?.down||x.down||0))/1073741824).toFixed(2)+' GB</td><td>'+expiry(x.expiryTime)+'</td><td><button onclick="ce('+JSON.stringify(encodeURIComponent(x.email))+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="link('+JSON.stringify(encodeURIComponent(x.email))+')">VLESS</button> <button onclick="ips('+JSON.stringify(encodeURIComponent(x.email))+')">IP</button> <button onclick="hwids('+JSON.stringify(encodeURIComponent(x.email))+')">HWID</button> <button onclick="resetc('+JSON.stringify(encodeURIComponent(x.email))+')">Сброс</button> <button class="d" onclick="delc('+JSON.stringify(encodeURIComponent(x.email))+')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('cl').textContent=e.message}
 }
 function expiry(v){if(!v)return '—';let d=new Date(Number(v));return isNaN(d)?'—':d.toLocaleString()}
-async function en(id,v){await api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}
-async function resetib(id){if(confirm('Сбросить трафик inbound?')){await api('/api/inbounds/'+id+'/reset-traffic',{method:'POST'});load()}}
-async function delib(id){if(confirm('Удалить inbound?')){await api('/api/inbounds/'+id,{method:'DELETE'});load()}}
-async function ce(e,v){await api('/api/clients/'+e+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}
-async function resetc(e){if(confirm('Сбросить трафик клиента?')){await api('/api/clients/'+e+'/reset-traffic',{method:'POST'});load()}}
-async function delc(e){if(confirm('Удалить клиента?')){await api('/api/clients/'+e,{method:'DELETE'});load()}}
-async function ips(e){let d=await api('/api/clients/'+e+'/ips',{method:'POST'});out('IP клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))}
-async function hwids(e){let d=await api('/api/clients/'+e+'/hwids',{method:'POST'});out('HWID клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))}
+async function action(fn){try{await fn();load()}catch(e){out('Ошибка: '+e.message)}}
+async function en(id,v){await action(()=>api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})}))}
+async function resetib(id){if(confirm('Сбросить трафик inbound?'))await action(()=>api('/api/inbounds/'+id+'/reset-traffic',{method:'POST'}))}
+async function delib(id){if(confirm('Удалить inbound?'))await action(()=>api('/api/inbounds/'+id,{method:'DELETE'}))}
+async function ce(e,v){await action(()=>api('/api/clients/'+e+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})}))}
+async function resetc(e){if(confirm('Сбросить трафик клиента?'))await action(()=>api('/api/clients/'+e+'/reset-traffic',{method:'POST'}))}
+async function delc(e){if(confirm('Удалить клиента?'))await action(()=>api('/api/clients/'+e,{method:'DELETE'}))}
+async function ips(e){await action(async()=>{let d=await api('/api/clients/'+e+'/ips',{method:'POST'});out('IP клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))})}
+async function hwids(e){await action(async()=>{let d=await api('/api/clients/'+e+'/hwids',{method:'POST'});out('HWID клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))})}
 async function link(e){
  try{
   let d=await api('/api/clients/'+e+'/link'); let text='VLESS:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:'');
