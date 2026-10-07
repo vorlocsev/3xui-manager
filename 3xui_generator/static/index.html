@@ -9,7 +9,7 @@ button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}butto
 table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
 #msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.2.4</small></h1>
+<h1>3x-ui Manager <small>v4.2.5</small></h1>
 <section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button>
 <button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
@@ -18,6 +18,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px so
 <script>
 const $=x=>document.getElementById(x),esc=x=>String(x??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 async function api(u,o){
+ if(u.startsWith('/'))u=u.slice(1);
  let r=await fetch(u,o);
  let t=await r.text();
  let d;
