@@ -182,6 +182,18 @@ def inbound_update(iid):
 @app.get("/api/clients")
 def clients(): return jsonify(call("GET", "/panel/api/clients/list"))
 
+@app.post("/api/clients/presence")
+def client_presence():
+    try:
+        online = obj(call("POST", "/panel/api/clients/onlines")) or []
+    except Exception:
+        online = []
+    try:
+        last = obj(call("POST", "/panel/api/clients/lastOnline")) or {}
+    except Exception:
+        last = {}
+    return jsonify({"success": True, "online": online, "last_online": last})
+
 @app.get("/api/clients/<path:email>")
 def client_get(email): return jsonify(find_client(email))
 
