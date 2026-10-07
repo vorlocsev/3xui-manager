@@ -50,7 +50,32 @@ def normalize(x):
     return y
 
 def find_client(email):
-    return obj(call("GET", "/panel/api/clients/get/" + qpath(email))) or {}
+    raw = obj(call("GET", "/panel/api/clients/get/" + qpath(email))) or {}
+    # 3x-ui 3.9.0 returns a hydration object:
+    # {"client": {...}, "inboundIds": [...], ...}
+    if isinstance(raw, dict) and isinstance(raw.get("client"), dict):
+        c = dict(raw["client"])
+        if "inboundIds" in raw:
+            c["inboundIds"] = raw.get("inboundIds") or []
+        return c
+    return raw
+
+def client_update_payload(cur, overrides=None):
+    overrides = overrides or {}
+    c = dict(cur or {})
+    c.update(overrides)
+    data = {}
+    for k in (
+        "email","subId","password","auth","flow","security","totalGB","expiryTime",
+        "limitIp","limitHwid","tgId","reset","resetDay","resetWeekday","resetMax",
+        "trafficReset","trafficResetDay","group","comment","enable"
+    ):
+        if k in c:
+            data[k] = c[k]
+    data["id"] = c.get("uuid") or c.get("id") or ""
+    if isinstance(c.get("reverse"), dict) and c["reverse"].get("tag"):
+        data["reverse"] = {"tag": c["reverse"]["tag"]}
+    return data
 
 def find_inbound(iid):
     return normalize(obj(call("GET", f"/panel/api/inbounds/get/{int(iid)}")) or {})
@@ -164,17 +189,15 @@ def client_get(email): return jsonify(find_client(email))
 def client_update(email):
     p = request.get_json(silent=True) or {}
     cur = find_client(email)
-    data = dict(cur)
-    for k in ("email","totalGB","expiryTime","limitIp","limitHwid","enable","flow","tgId","subId","comment","reset"):
-        if k in p: data[k] = p[k]
+    data = client_update_payload(cur, p)
     return jsonify(call("POST", "/panel/api/clients/update/" + qpath(email), json=data))
 
 @app.post("/api/clients/<path:email>/enable")
 def client_enable(email):
     p = request.get_json(silent=True) or {}
     cur = find_client(email)
-    cur["enable"] = bool(p.get("enable"))
-    return jsonify(call("POST", "/panel/api/clients/update/" + qpath(email), json=cur))
+    data = client_update_payload(cur, {"enable": bool(p.get("enable"))})
+    return jsonify(call("POST", "/panel/api/clients/update/" + qpath(email), json=data))
 
 @app.post("/api/clients/<path:email>/reset-traffic")
 def client_reset(email): return jsonify(call("POST", "/panel/api/clients/resetTraffic/" + qpath(email)))
@@ -188,8 +211,8 @@ def clear_ips(email): return jsonify(call("POST", "/panel/api/clients/clearIps/"
 @app.post("/api/clients/<path:email>/hwids")
 def client_hwids(email): return jsonify(call("POST", "/panel/api/clients/hwids/" + qpath(email)))
 
-@app.post("/api/clients/<path:email>/clear-hwids")
-def clear_hwids(email): return jsonify(call("POST", "/panel/api/clients/clearHwids/" + qpath(email)))
+@app.delete("/api/clients/<path:email>/clear-hwids")
+def clear_hwids(email): return jsonify(call("DELETE", "/panel/api/clients/hwids/" + qpath(email)))
 
 @app.delete("/api/clients/<path:email>")
 def client_delete(email): return jsonify(call("POST", "/panel/api/clients/del/" + qpath(email) + "?keepTraffic=0"))
