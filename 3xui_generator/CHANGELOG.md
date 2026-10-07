@@ -2,8 +2,6 @@
 
 All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
 
-All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
-
 ## 4.4.0 - 2026-10-08
 
 - Simplified the client interface into compact client cards.
