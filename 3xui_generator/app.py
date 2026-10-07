@@ -144,6 +144,21 @@ def static_files(path=""):
 @app.get("/api/status")
 def status(): return jsonify(call("GET", "/panel/api/server/status"))
 
+@app.get("/api/panel-info")
+def panel_info():
+    status_data = call("GET", "/panel/api/server/status")
+    update_data = call("GET", "/panel/api/server/getPanelUpdateInfo")
+    return jsonify({"success": True, "status": obj(status_data), "update": obj(update_data)})
+
+@app.post("/api/panel-update")
+def panel_update():
+    result = call("POST", "/panel/api/server/updatePanel", data={})
+    return jsonify({"success": True, "obj": obj(result)})
+
+@app.get("/api/panel-update-status")
+def panel_update_status():
+    return jsonify(call("GET", "/panel/api/server/getUpdateStatus"))
+
 @app.get("/api/settings")
 def settings():
     return jsonify({"success": True, "server_address": SERVER_ADDRESS, "subscription_base_url": SUB_BASE})
