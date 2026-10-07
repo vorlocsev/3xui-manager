@@ -2,6 +2,15 @@
 
 All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
 
+## 4.5.0 - 2026-10-08
+
+- Added the connected 3x-ui panel version to the app header.
+- Added a stable-release update check using the native 3x-ui update API.
+- Added one-click 3x-ui panel update with confirmation.
+- Added post-update status refresh after the 3x-ui panel restarts.
+- Kept update execution inside 3x-ui instead of downloading or replacing the panel binary from the Home Assistant app.
+- Bumped the Home Assistant App version to 4.5.0.
+
 ## 4.4.0 - 2026-10-08
 
 - Simplified the client interface into compact client cards.
