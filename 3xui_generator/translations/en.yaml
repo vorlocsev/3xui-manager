@@ -1,0 +1,16 @@
+configuration:
+  3xui_url:
+    name: 3x-ui URL
+    description: Base URL of the remote 3x-ui panel, for example https://vpn.example.com
+  api_token:
+    name: API token
+    description: Bearer API token from 3x-ui Security settings
+  verify_tls:
+    name: Verify TLS certificate
+    description: Verify the HTTPS certificate of the remote 3x-ui panel
+  server_address:
+    name: VLESS server address
+    description: Public hostname or IP used in generated VLESS links
+  subscription_base_url:
+    name: Subscription base URL
+    description: Optional base URL for generated subscription links
