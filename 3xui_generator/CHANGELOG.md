@@ -2,6 +2,21 @@
 
 All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
 
+All notable changes to 3x-ui Manager are documented here. Newest versions are listed first.
+
+## 4.4.0 - 2026-10-08
+
+- Simplified the client interface into compact client cards.
+- Added online/offline status using the 3x-ui clients online endpoint.
+- Added last-seen information for offline clients when available.
+- Added automatic client presence refresh every 15 seconds.
+- Added one-tap VLESS link copy action.
+- Added Telegram share action using Telegram's official share URL.
+- Added inline QR code display for each client.
+- Kept enable/disable and delete actions directly on the client card.
+- Simplified inbound display and moved inbound management below the client list.
+- Bumped the Home Assistant App version to 4.4.0.
+
 ## 4.3.1 - 2026-10-08
 
 - Added a combined **Inbound + client** creation workflow.
