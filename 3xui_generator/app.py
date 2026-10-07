@@ -192,7 +192,7 @@ def client_hwids(email): return jsonify(call("POST", "/panel/api/clients/hwids/"
 def clear_hwids(email): return jsonify(call("POST", "/panel/api/clients/clearHwids/" + qpath(email)))
 
 @app.delete("/api/clients/<path:email>")
-def client_delete(email): return jsonify(call("POST", "/panel/api/clients/del/" + qpath(email)))
+def client_delete(email): return jsonify(call("POST", "/panel/api/clients/del/" + qpath(email) + "?keepTraffic=0"))
 
 @app.post("/api/clients/bulk-delete")
 def bulk_delete():
