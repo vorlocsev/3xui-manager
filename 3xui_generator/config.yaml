@@ -1,5 +1,5 @@
 name: 3x-ui Manager
-version: 4.2.1
+version: 4.2.2
 slug: 3xui_manager
 description: Home Assistant App for managing remote 3x-ui VLESS Reality inbounds, clients and subscriptions.
 url: https://github.com/vorlocsev/3xui-manager
@@ -20,8 +20,8 @@ watchdog: http://127.0.0.1:8099/health
 backup: hot
 stage: stable
 options:
-  3xui_url: null
-  api_token: null
+  3xui_url: ""
+  api_token: ""
   verify_tls: true
   server_address: ""
   subscription_base_url: ""
