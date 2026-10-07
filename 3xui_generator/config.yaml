@@ -6,6 +6,7 @@ url: https://github.com/vorlocsev/3xui-manager
 arch:
   - amd64
   - aarch64
+homeassistant: "2026.4.0"
 startup: application
 boot: auto
 init: false
