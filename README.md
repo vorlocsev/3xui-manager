@@ -1,29 +1,34 @@
 # 3x-ui Manager
 
-Home Assistant App for managing a remote 3x-ui 3.9.0 server.
+Home Assistant App for managing remote **3x-ui VLESS Reality** inbounds, clients and subscriptions.
 
-## Features
+**Current version: 4.2.0**
 
-- Home Assistant Ingress UI
+## Highlights
+
+- Home Assistant Ingress
 - Remote 3x-ui API
 - VLESS Reality inbound creation
-- Client creation and enable/disable
+- Client management
+- Enable/disable
+- Traffic reset
+- IP/HWID management
 - VLESS link generation
 - QR generation
-- Traffic and client management
+- Server-side API token handling
 
-## Configuration
+## Installation
 
-Configure the App with:
+Add this repository to the Home Assistant App Store:
 
-- 3x-ui URL
-- API Bearer token
-- TLS verification
-- VLESS server address
-- optional subscription base URL
+`https://github.com/vorlocsev/3xui-manager`
 
-The API token remains server-side and is not exposed to browser JavaScript.
+Then install **3x-ui Manager**.
 
-## Status
+## Compatibility
 
-Version 4.1.0 — public initial release.
+Designed for current Home Assistant Apps/Supervisor and tested against the 3x-ui 3.9 API model used by 3x-ui 3.9.0. The official 3x-ui API documents Bearer authentication and the inbound/client endpoints used by this project. citeturn0search1
+
+## Security
+
+No personal server credentials are included in the repository. Configure them through the Home Assistant App configuration UI.
