@@ -9,7 +9,7 @@ button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}butto
 table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
 #msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.2.1</small></h1>
+<h1>3x-ui Manager <small>v4.2.4</small></h1>
 <section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button>
 <button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
@@ -17,7 +17,14 @@ table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px so
 <section id="msg"></section>
 <script>
 const $=x=>document.getElementById(x),esc=x=>String(x??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-async function api(u,o){let r=await fetch(u,o),d=await r.json();if(!r.ok||d.success===false)throw Error(d.msg||r.status);return d}
+async function api(u,o){
+ let r=await fetch(u,o);
+ let t=await r.text();
+ let d;
+ try{d=JSON.parse(t)}catch(e){throw Error('HTTP '+r.status+': '+t.slice(0,500))}
+ if(!r.ok||d.success===false)throw Error(d.msg||r.status);
+ return d
+}
 function out(x){$('msg').textContent=x||''}
 async function load(){
  try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}
@@ -43,6 +50,7 @@ async function link(e){
 }
 async function cleanup(){if(confirm('Удалить depleted и orphan клиентов?')){await api('/api/clients/del-depleted',{method:'POST'});await api('/api/clients/del-orphans',{method:'POST'});load()}}
 async function create(){
+ try{
  let email=prompt('Email клиента');if(!email)return;
  let address=prompt('Server address / domain');if(!address)return;
  let sni=prompt('SNI');if(!sni)return;
@@ -50,6 +58,7 @@ async function create(){
  let remark=prompt('Inbound name','VLESS Reality')||'VLESS Reality';
  let d=await api('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,server_address:address,sni,dest,port:443,remark})});
  out('Создано:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:''));load()
+ }catch(e){out('Ошибка создания: '+e.message)}
 }
 load();
 </script></body></html>
