@@ -1,17 +1,55 @@
-<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>3x-ui Manager</title><style>
-body{font:14px system-ui;max-width:1200px;margin:auto;padding:16px;background:#111;color:#eee}section{background:#1d1d1d;padding:16px;margin:12px 0;border-radius:12px}button,input{padding:8px;border-radius:7px;border:1px solid #555;background:#111;color:#eee;margin:3px}button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}#msg{white-space:pre-wrap}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}small{color:#aaa}</style>
-<h1>3x-ui Manager <small>v4.1</small></h1><section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button> <span id="st"></span></section>
-<section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section><section><h2>Клиенты</h2><div id="cl">Загрузка…</div></section><section id="msg"></section>
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3x-ui Manager</title>
+<style>
+body{font:14px system-ui;max-width:1250px;margin:auto;padding:16px;background:#111;color:#eee}
+section{background:#1d1d1d;padding:16px;margin:12px 0;border-radius:12px}
+button,input{padding:8px;border-radius:7px;border:1px solid #555;background:#111;color:#eee;margin:3px}
+button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}button.s{background:#555}
+table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
+#msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
+</style></head><body>
+<h1>3x-ui Manager <small>v4.2.1</small></h1>
+<section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button>
+<button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
+<section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
+<section><h2>Клиенты</h2><div id="cl">Загрузка…</div></section>
+<section id="msg"></section>
 <script>
 const $=x=>document.getElementById(x),esc=x=>String(x??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 async function api(u,o){let r=await fetch(u,o),d=await r.json();if(!r.ok||d.success===false)throw Error(d.msg||r.status);return d}
-async function load(){try{await api('/api/status');$('st').textContent=' ● 3x-ui OK'}catch(e){$('st').textContent=' ● '+e.message}
-try{let d=await api('/api/inbounds');let a=d.obj||[];$('ib').innerHTML='<table><tr><th>ID</th><th>Название</th><th>Port</th><th>State</th><th></th></tr>'+a.map(x=>'<tr><td>'+x.id+'</td><td>'+esc(x.remark)+'</td><td>'+x.port+'</td><td>'+((x.enable)?'ON':'OFF')+'</td><td><button onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button class="d" onclick="delib('+x.id+')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('ib').textContent=e.message}
-try{let d=await api('/api/clients');let a=d.obj||[];$('cl').innerHTML='<table><tr><th>Email</th><th>State</th><th>Traffic</th><th></th></tr>'+a.map(x=>'<tr><td>'+esc(x.email)+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td>'+((Number(x.up||0)+Number(x.down||0))/1073741824).toFixed(2)+' GB</td><td><button onclick="ce(\''+encodeURIComponent(x.email)+'\','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="link(\''+encodeURIComponent(x.email)+'\')">VLESS</button> <button onclick="delc(\''+encodeURIComponent(x.email)+'\')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('cl').textContent=e.message}}
-async function en(id,v){await api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}async function delib(id){if(confirm('Удалить inbound?')){await api('/api/inbounds/'+id,{method:'DELETE'});load()}}
-async function ce(e,v){await api('/api/clients/'+e+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}async function delc(e){if(confirm('Удалить клиента?')){await api('/api/clients/'+e,{method:'DELETE'});load()}}
-async function link(e){let d=await api('/api/clients/'+e);let c=d.obj||d;let ib=await api('/api/inbounds');let a=ib.obj||[];let x=a.find(i=>(i.settings?.clients||[]).some(z=>z.email===c.email));if(!x){alert('Inbound не найден');return}let q=prompt('Server address:',location.hostname);let p=await api('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:c.email,server_address:q,sni:(x.streamSettings?.realitySettings?.serverNames||[''])[0],dest:(x.streamSettings?.realitySettings?.dest||'')})}).catch(()=>null);if(p?.link)prompt('VLESS link',p.link)}
-async function create(){let email=prompt('Email клиента');if(!email)return;let address=prompt('Server address / domain');let sni=prompt('SNI');let dest=prompt('Reality destination');if(!address||!sni||!dest)return;let d=await api('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,server_address:address,sni,dest,port:443,remark:'VLESS Reality'})});prompt('VLESS link',d.link);load()}
-load()
-</script>
+function out(x){$('msg').textContent=x||''}
+async function load(){
+ try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}
+ try{let d=await api('/api/inbounds'),a=d.obj||[];$('ib').innerHTML='<table><tr><th>ID</th><th>Название</th><th>Port</th><th>Клиенты</th><th>State</th><th></th></tr>'+a.map(x=>{let n=(x.settings?.clients||[]).length;return '<tr><td>'+x.id+'</td><td>'+esc(x.remark)+'</td><td>'+x.port+'</td><td>'+n+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td><button onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="resetib('+x.id+')">Сброс</button> <button class="d" onclick="delib('+x.id+')">Удалить</button></td></tr>'}).join('')+'</table>'}catch(e){$('ib').textContent=e.message}
+ try{let d=await api('/api/clients'),a=d.obj||[];$('cl').innerHTML='<table><tr><th>Email</th><th>State</th><th>Traffic</th><th>Expiry</th><th></th></tr>'+a.map(x=>'<tr><td>'+esc(x.email)+'</td><td>'+(x.enable?'ON':'OFF')+'</td><td>'+((Number(x.up||0)+Number(x.down||0))/1073741824).toFixed(2)+' GB</td><td>'+expiry(x.expiryTime)+'</td><td><button onclick="ce('+JSON.stringify(encodeURIComponent(x.email))+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button> <button onclick="link('+JSON.stringify(encodeURIComponent(x.email))+')">VLESS</button> <button onclick="ips('+JSON.stringify(encodeURIComponent(x.email))+')">IP</button> <button onclick="hwids('+JSON.stringify(encodeURIComponent(x.email))+')">HWID</button> <button onclick="resetc('+JSON.stringify(encodeURIComponent(x.email))+')">Сброс</button> <button class="d" onclick="delc('+JSON.stringify(encodeURIComponent(x.email))+')">Удалить</button></td></tr>').join('')+'</table>'}catch(e){$('cl').textContent=e.message}
+}
+function expiry(v){if(!v)return '—';let d=new Date(Number(v));return isNaN(d)?'—':d.toLocaleString()}
+async function en(id,v){await api('/api/inbounds/'+id+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}
+async function resetib(id){if(confirm('Сбросить трафик inbound?')){await api('/api/inbounds/'+id+'/reset-traffic',{method:'POST'});load()}}
+async function delib(id){if(confirm('Удалить inbound?')){await api('/api/inbounds/'+id,{method:'DELETE'});load()}}
+async function ce(e,v){await api('/api/clients/'+e+'/enable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enable:v})});load()}
+async function resetc(e){if(confirm('Сбросить трафик клиента?')){await api('/api/clients/'+e+'/reset-traffic',{method:'POST'});load()}}
+async function delc(e){if(confirm('Удалить клиента?')){await api('/api/clients/'+e,{method:'DELETE'});load()}}
+async function ips(e){let d=await api('/api/clients/'+e+'/ips',{method:'POST'});out('IP клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))}
+async function hwids(e){let d=await api('/api/clients/'+e+'/hwids',{method:'POST'});out('HWID клиента '+decodeURIComponent(e)+':\n'+JSON.stringify(d.obj||d,null,2))}
+async function link(e){
+ try{
+  let d=await api('/api/clients/'+e+'/link'); let text='VLESS:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:'');
+  let q=await api('/api/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({link:d.link})});
+  out(text+'\n\nQR:');
+  let img=document.createElement('img');img.src='data:image/png;base64,'+q.png_base64;img.style.maxWidth='320px';$('msg').appendChild(document.createElement('br'));$('msg').appendChild(img);
+ }catch(err){out(err.message)}
+}
+async function cleanup(){if(confirm('Удалить depleted и orphan клиентов?')){await api('/api/clients/del-depleted',{method:'POST'});await api('/api/clients/del-orphans',{method:'POST'});load()}}
+async function create(){
+ let email=prompt('Email клиента');if(!email)return;
+ let address=prompt('Server address / domain');if(!address)return;
+ let sni=prompt('SNI');if(!sni)return;
+ let dest=prompt('Reality destination');if(!dest)return;
+ let remark=prompt('Inbound name','VLESS Reality')||'VLESS Reality';
+ let d=await api('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,server_address:address,sni,dest,port:443,remark})});
+ out('Создано:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:''));load()
+}
+load();
+</script></body></html>
