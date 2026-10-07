@@ -9,8 +9,8 @@ button{cursor:pointer;background:#3478f6;border:0}button.d{background:#a33}butto
 table{width:100%;border-collapse:collapse}td,th{padding:7px;border-bottom:1px solid #444;text-align:left}
 #msg{white-space:pre-wrap}.ok{color:#6f6}.bad{color:#f77}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.2.7</small></h1>
-<section><button onclick="load()">Обновить</button> <button onclick="create()">+ VLESS Reality</button>
+<h1>3x-ui Manager <small>v4.3.0</small></h1>
+<section><button onclick="load()">Обновить</button> <button onclick="newInbound()">+ Создать inbound</button> <button onclick="newClient()">+ Добавить клиента</button>
 <button class="s" onclick="cleanup()">Очистить depleted/orphans</button> <span id="st"></span></section>
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
 <section><h2>Клиенты</h2><div id="cl">Загрузка…</div></section>
@@ -51,16 +51,34 @@ async function link(e){
  }catch(err){out(err.message)}
 }
 async function cleanup(){if(confirm('Удалить depleted и orphan клиентов?')){await api('/api/clients/del-depleted',{method:'POST'});await api('/api/clients/del-orphans',{method:'POST'});load()}}
-async function create(){
+async function newInbound(){
+ $('msg').innerHTML='<h3>Создать VLESS Reality inbound</h3><input id="ir" placeholder="Название" value="VLESS Reality"><input id="ip" type="number" value="443" placeholder="Порт"><input id="is" placeholder="SNI"><input id="id" placeholder="Destination, например www.cloudflare.com:443"><button onclick="createInbound()">Создать</button>';
+}
+async function createInbound(){
  try{
- let email=prompt('Email клиента');if(!email)return;
- let address=prompt('Server address / domain');if(!address)return;
- let sni=prompt('SNI');if(!sni)return;
- let dest=prompt('Reality destination');if(!dest)return;
- let remark=prompt('Inbound name','VLESS Reality')||'VLESS Reality';
- let d=await api('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,server_address:address,sni,dest,port:443,remark})});
- out('Создано:\n'+d.link+(d.subscription?'\n\nSubscription:\n'+d.subscription:''));load()
- }catch(e){out('Ошибка создания: '+e.message)}
+  let p={remark:$('ir').value,port:Number($('ip').value),sni:$('is').value,dest:$('id').value};
+  if(!p.remark||!p.port||!p.sni||!p.dest)throw Error('Заполни все поля');
+  let d=await api('/api/inbounds/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+  out('Inbound создан: #'+d.inbound.id+' '+d.inbound.remark);load();
+ }catch(e){out('Ошибка создания inbound: '+e.message)}
+}
+async function newClient(){
+ try{
+  let d=await api('/api/inbounds'), a=(d.obj||[]).filter(x=>x.protocol==='vless'&&(x.streamSettings?.security==='reality'||x.streamSettings?.realitySettings));
+  if(!a.length){out('Сначала создай VLESS Reality inbound');return}
+  let opts=a.map(x=>'<option value="'+x.id+'">'+esc(x.remark)+' — '+x.port+'</option>').join('');
+  $('msg').innerHTML='<h3>Добавить клиента</h3><select id="ci">'+opts+'</select><input id="ce" placeholder="Email клиента"><select id="cg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><button onclick="createClient()">Создать клиента</button>';
+ }catch(e){out('Ошибка: '+e.message)}
+}
+async function createClient(){
+ try{
+  let email=$('ce').value.trim(),iid=Number($('ci').value),gb=Number($('cg').value);
+  if(!email)throw Error('Укажи email');
+  let cfg=await api('/api/settings'), address=cfg.server_address||prompt('Server address / domain');
+  if(!address)throw Error('Не указан server address');
+  let d=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,inbound_id:iid,total_gb:gb,server_address:address})});
+  out('Клиент создан:\n'+d.link);load();
+ }catch(e){out('Ошибка создания клиента: '+e.message)}
 }
 load();
 </script></body></html>
