@@ -5,7 +5,7 @@
 :root{color-scheme:dark}
 body{font:15px system-ui,-apple-system,sans-serif;max-width:1050px;margin:auto;padding:14px;background:#111;color:#eee}
 section{background:#1b1b1b;padding:14px;margin:10px 0;border-radius:12px}
-h1{font-size:22px;margin:4px 0 14px}h2{font-size:18px;margin:0 0 10px}
+h1{font-size:22px;margin:4px 0 14px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}.lang{font-size:13px;color:#aaa}.lang select{margin:0;padding:6px}h2{font-size:18px;margin:0 0 10px}
 button,input,select{padding:9px;border-radius:8px;border:1px solid #4a4a4a;background:#111;color:#eee;margin:3px}
 button{cursor:pointer;background:#3478f6;border:0}button:disabled{opacity:.45;cursor:not-allowed}
 button.s{background:#555}button.d{background:#a33}
@@ -20,7 +20,7 @@ button.s{background:#555}button.d{background:#a33}
 #msg{white-space:pre-wrap}.ok{color:#72e28a}.bad{color:#ff7777}
 small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid #8a6d1d;border-radius:10px;padding:10px;margin-bottom:10px}.updateNotice.show{display:block}.updateNotice b{color:#ffd86b}
 </style></head><body>
-<h1>3x-ui Manager <small>v4.5.1</small></h1>
+<div class="topbar"><h1>3x-ui Manager <small>v4.5.2</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
 <section><div id="updateNotice" class="updateNotice"></div><div id="panelInfo" style="margin-bottom:8px">3x-ui: проверка…</div><div class="toolbar">
 <button onclick="load()">Обновить</button>
 <button onclick="newClient()">+ Клиент</button>
@@ -32,20 +32,70 @@ small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid 
 <section><h2>Inbound'ы</h2><div id="ib">Загрузка…</div></section>
 <section id="msg"></section>
 <script>
+
+const I18N={
+ru:{
+'Обновить':'Обновить','+ Клиент':'+ Клиент','+ Inbound + клиент':'+ Inbound + клиент','Inbound':'Inbound',
+'Клиенты':'Клиенты','Inbound\'ы':"Inbound'ы",'Загрузка…':'Загрузка…','Клиентов пока нет.':'Клиентов пока нет.','Inbound\'ов нет.':"Inbound'ов нет.",
+'без лимита':'без лимита','только что':'только что','мин назад':'мин назад','ч назад':'ч назад','дн назад':'дн назад',
+'Скопировать':'Скопировать','Telegram':'Telegram','QR':'QR','Выключить':'Выключить','Включить':'Включить','Удалить':'Удалить',
+'последняя стабильная':'последняя стабильная','доступна':'доступна','Обновить сейчас':'Обновить сейчас',
+'проверка…':'проверка…','● 3x-ui OK':'● 3x-ui OK',
+'Новый VLESS Reality':'Новый VLESS Reality','Название':'Название','Порт':'Порт','SNI':'SNI',
+'Destination, например www.cloudflare.com:443':'Destination, например www.cloudflare.com:443','Создать':'Создать',
+'Новый клиент':'Новый клиент','Email клиента':'Email клиента','Без лимита':'Без лимита','Свой лимит, GB':'Свой лимит, GB',
+'Inbound + клиент':'Inbound + клиент','Название inbound':'Название inbound','Email клиента':'Email клиента',
+'Ошибка:':'Ошибка:','Заполни все поля':'Заполни все поля','Укажи email':'Укажи email',
+'Не указан server address':'Не указан server address','Сначала создай VLESS Reality inbound':'Сначала создай VLESS Reality inbound',
+'Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.':'Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.',
+'Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.':'Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.',
+'Inbound создан':'Inbound создан','Ссылка клиента ':'Ссылка клиента ',' скопирована.':' скопирована.',
+'Обновление 3x-ui запущено. Панель может быть недоступна несколько секунд.':'Обновление 3x-ui запущено. Панель может быть недоступна несколько секунд.',
+'Обновление 3x-ui до последней стабильной версии? Панель 3x-ui перезапустится.':'Обновление 3x-ui до последней стабильной версии? Панель 3x-ui перезапустится.'
+},
+en:{
+'Обновить':'Refresh','+ Клиент':'+ Client','+ Inbound + клиент':'+ Inbound + client','Inbound':'Inbound',
+'Клиенты':'Clients','Inbound\'ы':"Inbounds",'Загрузка…':'Loading…','Клиентов пока нет.':'No clients yet.','Inbound\'ов нет.':"No inbounds.",
+'без лимита':'unlimited','только что':'just now','мин назад':'min ago','ч назад':'h ago','дн назад':'d ago',
+'Скопировать':'Copy','Telegram':'Telegram','QR':'QR','Выключить':'Disable','Включить':'Enable','Удалить':'Delete',
+'последняя стабильная':'latest stable','доступна':'available','Обновить сейчас':'Update now',
+'проверка…':'checking…','● 3x-ui OK':'● 3x-ui OK',
+'Новый VLESS Reality':'New VLESS Reality','Название':'Name','Порт':'Port','SNI':'SNI',
+'Destination, например www.cloudflare.com:443':'Destination, e.g. www.cloudflare.com:443','Создать':'Create',
+'Новый клиент':'New client','Email клиента':'Client email','Без лимита':'Unlimited','Свой лимит, GB':'Custom limit, GB',
+'Inbound + клиент':'Inbound + client','Название inbound':'Inbound name',
+'Ошибка:':'Error:','Заполни все поля':'Fill in all fields','Укажи email':'Enter client email',
+'Не указан server address':'Server address is not set','Сначала создай VLESS Reality inbound':'Create a VLESS Reality inbound first',
+'Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.':'Client created. You can now copy the link or share it via Telegram.',
+'Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.':'Inbound + client created. You can now copy the link or share it via Telegram.',
+'Inbound создан':'Inbound created','Ссылка клиента ':'Client link ',' скопирована.':' copied.',
+'Обновление 3x-ui запущено. Панель может быть недоступна несколько секунд.':'3x-ui update started. The panel may be unavailable for a few seconds.',
+'Обновление 3x-ui до последней стабильной версии? Панель 3x-ui перезапустится.':'Update 3x-ui to the latest stable version? The 3x-ui panel will restart.'
+}};
+let LANG=localStorage.getItem('3xui-manager-lang')||'ru';
+function tr(s){let d=I18N[LANG]||I18N.ru;let out=String(s??'');Object.keys(d).sort((a,b)=>b.length-a.length).forEach(k=>{out=out.split(k).join(d[k])});return out}
+function setLang(v){LANG=v==='en'?'en':'ru';localStorage.setItem('3xui-manager-lang',LANG);applyLang();load()}
+function applyLang(){
+  let sel=$('lang');if(sel)sel.value=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=tr(e.dataset.i18n)});
+  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.2</small>';
+  let hs=document.querySelectorAll('section h2');if(hs[0])hs[0].innerHTML=tr('Клиенты')+' <small id="count"></small>';if(hs[1])hs[1].textContent=tr("Inbound'ы");
+}
+
 const $=x=>document.getElementById(x),esc=x=>String(x??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const enc=encodeURIComponent,links={};
 async function api(u,o){if(u.startsWith('/'))u=u.slice(1);let r=await fetch(u,o),t=await r.text(),d;try{d=JSON.parse(t)}catch(e){throw Error('HTTP '+r.status+': '+t.slice(0,400))}if(!r.ok||d.success===false)throw Error(d.msg||r.status);return d}
-function out(x){$('msg').textContent=x||''}
+function out(x){$('msg').textContent=tr(x||'')}
 function gb(x){return((Number(x?.traffic?.up||x?.up||0)+Number(x?.traffic?.down||x?.down||0))/1073741824).toFixed(2)}
 function expiry(v){if(!v)return'без срока';let d=new Date(Number(v));return isNaN(d)?'—':d.toLocaleString()}
-function ago(v){if(!v)return'';let n=Date.now()-Number(v)*1000;if(n<60000)return'только что';if(n<3600000)return Math.floor(n/60000)+' мин назад';if(n<86400000)return Math.floor(n/3600000)+' ч назад';return Math.floor(n/86400000)+' дн назад'}
+function ago(v){if(!v)return'';let n=Date.now()-Number(v)*1000;if(n<60000)return tr('только что');if(n<3600000)return Math.floor(n/60000)+' '+tr('мин назад');if(n<86400000)return Math.floor(n/3600000)+' '+tr('ч назад');return Math.floor(n/86400000)+' '+tr('дн назад')}
 async function presence(){try{let d=await api('/api/clients/presence',{method:'POST'});return{online:new Set(d.online||[]),last:d.last_online||{}}}catch(e){return{online:new Set(),last:{}}}}
-async function loadClients(){let d=await api('/api/clients'),a=d.obj||[],p=await presence();$('count').textContent='— '+a.length;$('cl').innerHTML=a.length?a.map(x=>{let on=p.online.has(x.email),last=p.last[x.email],key=enc(x.email);return'<div class="client"><div class="row"><div class="name">'+esc(x.email)+'</div><div class="presence '+(on?'online':'offline')+'"><span class="dot"></span>'+(on?'ONLINE':'offline')+(on?'':' '+(ago(last)||''))+'</div></div><div class="meta">'+gb(x)+' GB использовано · '+(x.totalGB?((Number(x.totalGB)/1073741824).toFixed(0)+' GB лимит · '):'без лимита · ')+expiry(x.expiryTime)+'</div><div class="actions"><button onclick="copyLink('+JSON.stringify(x.email)+')">📋 Скопировать</button><button onclick="telegram('+JSON.stringify(x.email)+')">✈ Telegram</button><button onclick="showQr('+JSON.stringify(x.email)+')">▦ QR</button><button class="s" onclick="ce('+JSON.stringify(x.email)+','+(!x.enable)+')">'+(x.enable?'Выключить':'Включить')+'</button><button class="d" onclick="delc('+JSON.stringify(x.email)+')">Удалить</button></div><div class="linkbox" id="l_'+key+'"></div></div>'}).join(''):'<small>Клиентов пока нет.</small>'}
+async function loadClients(){let d=await api('/api/clients'),a=d.obj||[],p=await presence();$('count').textContent='— '+a.length;$('cl').innerHTML=a.length?a.map(x=>{let on=p.online.has(x.email),last=p.last[x.email],key=enc(x.email);return'<div class="client"><div class="row"><div class="name">'+esc(x.email)+'</div><div class="presence '+(on?'online':'offline')+'"><span class="dot"></span>'+(on?'ONLINE':'offline')+(on?'':' '+(ago(last)||''))+'</div></div><div class="meta">'+gb(x)+' GB использовано · '+(x.totalGB?((Number(x.totalGB)/1073741824).toFixed(0)+' GB '+(LANG==='en'?'limit · ':'лимит · ')):(LANG==='en'?'unlimited · ':'без лимита · '))+expiry(x.expiryTime)+'</div><div class="actions"><button onclick="copyLink('+JSON.stringify(x.email)+')">📋 Скопировать</button><button onclick="telegram('+JSON.stringify(x.email)+')">✈ Telegram</button><button onclick="showQr('+JSON.stringify(x.email)+')">▦ QR</button><button class="s" onclick="ce('+JSON.stringify(x.email)+','+(!x.enable)+')">'+(x.enable?'Выключить':'Включить')+'</button><button class="d" onclick="delc('+JSON.stringify(x.email)+')">Удалить</button></div><div class="linkbox" id="l_'+key+'"></div></div>'}).join(''):'<small>Клиентов пока нет.</small>'}
 async function loadInbounds(){let d=await api('/api/inbounds'),a=d.obj||[];$('ib').innerHTML=a.length?a.map(x=>'<div class="ibrow"><span><b>'+esc(x.remark)+'</b> · '+x.protocol+' : '+x.port+' · '+(x.enable?'ON':'OFF')+'</span><span><button class="s" onclick="en('+x.id+','+(!x.enable)+')">'+(x.enable?'OFF':'ON')+'</button><button class="d" onclick="delib('+x.id+')">Удалить</button></span></div>').join(''):'<small>Inbound'ов нет.</small>'}
 function normVer(v){return String(v||'').trim().replace(/^v/i,'')}
-function notifyNewVersion(cur,latest){let n=$('updateNotice');if(!latest||!cur||normVer(latest)===normVer(cur)){n.className='updateNotice';n.innerHTML='';return}n.className='updateNotice show';n.innerHTML='<b>🔔 Доступна новая версия 3x-ui: '+esc(latest)+'</b><br>Установлена: '+esc(cur)+' <button onclick="updatePanel()">Обновить сейчас</button>';try{if('Notification' in window&&Notification.permission==='granted')new Notification('3x-ui: доступна новая версия',{body:latest+' (установлена '+cur+')'});else if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}}
-async function panelInfo(){try{let d=await api('/api/panel-info'),s=d.status||{},u=d.update||{},cur=s.version||s.xuiVersion||s.xui_version||'—',latest=u.version||u.latestVersion||u.latest||u.tag||'';notifyNewVersion(cur,latest);let newer=latest&&normVer(latest)!==normVer(cur);$('panelInfo').innerHTML='<b>3x-ui:</b> '+esc(cur)+(newer?' → <b>доступна '+esc(latest)+'</b> <button onclick="updatePanel()">Обновить 3x-ui</button>':' <span class="ok">✓ последняя стабильная</span>')}catch(e){$('panelInfo').innerHTML='<b>3x-ui:</b> <span class="bad">'+esc(e.message)+'</span>'}}
-async function updatePanel(){if(!confirm('Обновить 3x-ui до последней стабильной версии? Панель 3x-ui перезапустится.'))return;try{$('panelInfo').textContent='Обновление 3x-ui запущено…';$('updateNotice').className='updateNotice';await api('/api/panel-update',{method:'POST'});out('Обновление 3x-ui запущено. Панель может быть недоступна несколько секунд.');setTimeout(panelInfo,5000);setTimeout(panelInfo,15000)}catch(e){out('Ошибка обновления 3x-ui: '+e.message);panelInfo()}}
+function notifyNewVersion(cur,latest){let n=$('updateNotice');if(!latest||!cur||normVer(latest)===normVer(cur)){n.className='updateNotice';n.innerHTML='';return}n.className='updateNotice show';n.innerHTML='<b>🔔 '+(LANG==='en'?'New 3x-ui version available: ':'Доступна новая версия 3x-ui: ')+esc(latest)+'</b><br>'+(LANG==='en'?'Installed: ':'Установлена: ')+esc(cur)+' <button onclick="updatePanel()">'+tr('Обновить сейчас')+'</button>';try{if('Notification' in window&&Notification.permission==='granted')new Notification('3x-ui: доступна новая версия',{body:latest+' (установлена '+cur+')'});else if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}}
+async function panelInfo(){try{let d=await api('/api/panel-info'),s=d.status||{},u=d.update||{},cur=s.version||s.xuiVersion||s.xui_version||'—',latest=u.version||u.latestVersion||u.latest||u.tag||'';notifyNewVersion(cur,latest);let newer=latest&&normVer(latest)!==normVer(cur);$('panelInfo').innerHTML='<b>3x-ui:</b> '+esc(cur)+(newer?' → <b>'+tr('доступна')+' '+esc(latest)+'</b> <button onclick="updatePanel()">'+(LANG==='en'?'Update 3x-ui':'Обновить 3x-ui')+'</button>':' <span class="ok">✓ '+tr('последняя стабильная')+'</span>')}catch(e){$('panelInfo').innerHTML='<b>3x-ui:</b> <span class="bad">'+esc(e.message)+'</span>'}}
+async function updatePanel(){if(!confirm(tr('Обновление 3x-ui до последней стабильной версии? Панель 3x-ui перезапустится.')))return;try{$('panelInfo').textContent='Обновление 3x-ui запущено…';$('updateNotice').className='updateNotice';await api('/api/panel-update',{method:'POST'});out('Обновление 3x-ui запущено. Панель может быть недоступна несколько секунд.');setTimeout(panelInfo,5000);setTimeout(panelInfo,15000)}catch(e){out('Ошибка обновления 3x-ui: '+e.message);panelInfo()}}
 async function load(){panelInfo();try{await api('/api/status');$('st').innerHTML='<span class="ok">● 3x-ui OK</span>'}catch(e){$('st').innerHTML='<span class="bad">● '+esc(e.message)+'</span>'}try{await Promise.all([loadClients(),loadInbounds()])}catch(e){out('Ошибка: '+e.message)}}
 async function getLink(email){if(links[email])return links[email];let d=await api('/api/clients/'+enc(email)+'/link');links[email]=d.link;return d.link}
 async function copyLink(email){try{let l=await getLink(email);if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(l);else{let t=document.createElement('textarea');t.value=l;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}out('Ссылка клиента '+email+' скопирована.')}catch(e){out('Ошибка: '+e.message)}}
@@ -61,5 +111,5 @@ async function newClient(){try{let d=await api('/api/inbounds'),a=(d.obj||[]).fi
 async function createClient(){let b=$('createClBtn');b.disabled=true;try{let email=$('ce').value.trim(),iid=Number($('ci').value),custom=Number($('cgCustom').value),gb=custom>0?custom:Number($('cg').value);if(!email)throw Error('Укажи email');let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let d=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,inbound_id:iid,total_gb:gb,server_address:address})});links[email]=d.link;out('Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
 async function newSetup(){$('msg').innerHTML='<h3>Inbound + клиент</h3><input id="sr" placeholder="Название inbound" value="VLESS Reality"><input id="sp" type="number" value="443"><input id="ss" placeholder="SNI"><input id="sd" placeholder="Destination, например www.cloudflare.com:443"><input id="se" placeholder="Email клиента"><select id="sg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="sgc" type="number" min="0" placeholder="Свой лимит, GB"><button id="setupBtn" onclick="createSetup()">Создать</button>'}
 async function createSetup(){let b=$('setupBtn');b.disabled=true;try{let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let custom=Number($('sgc').value),gb=custom>0?custom:Number($('sg').value),p={remark:$('sr').value,port:Number($('sp').value),sni:$('ss').value,dest:$('sd').value,email:$('se').value,total_gb:gb,server_address:address};if(!p.remark||!p.port||!p.sni||!p.dest||!p.email)throw Error('Заполни все поля');let d=await api('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});links[p.email]=d.link;out('Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
-load();setInterval(()=>loadClients().catch(()=>{}),15000);setInterval(()=>panelInfo().catch(()=>{}),60000);
+applyLang();load();setInterval(()=>loadClients().catch(()=>{}),15000);setInterval(()=>panelInfo().catch(()=>{}),60000);
 </script></body></html>
