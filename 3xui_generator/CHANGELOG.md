@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.6.0 - 2026-10-08
+
+- Added a step-by-step client creation wizard.
+- Wizard supports adding a client to an existing VLESS Reality inbound or creating a new VLESS Reality inbound with the client.
+- Added traffic quota, expiry days, IP and HWID limits to the creation flow.
+- Added a final review step and immediate VLESS link/QR/Telegram actions after creation.
+- Bumped the Home Assistant App version to 4.6.0.
+
+
 ## 4.5.5 - 2026-10-08
 
 - Fixed client enable/disable buttons appearing grey/inactive.
