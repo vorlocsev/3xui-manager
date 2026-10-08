@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.5.5 - 2026-10-08
+
+- Fixed client enable/disable buttons appearing grey/inactive.
+- Enable and disable actions now have clear active colors while remaining grey only when temporarily disabled during a request.
+- Bumped the Home Assistant App version to 4.5.5.
+
 ## 4.5.4 - 2026-10-08
 
 - Fixed the visible app version in the language-switch refresh path (it was still showing 4.5.2).
