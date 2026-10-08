@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.5.3 - 2026-10-08
+
+- Fixed stable 3x-ui update detection to use the official `currentVersion`, `latestVersion` and `updateAvailable` fields.
+- Added polling of the native 3x-ui update status using the returned update run ID.
+- Added explicit success/failure feedback for panel updates.
+- Bumped the Home Assistant App version to 4.5.3.
+
+
 ## 4.5.2 - 2026-10-08
 
 - Added an RU/EN language selector to the Home Assistant web interface.
