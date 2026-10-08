@@ -20,7 +20,7 @@ button.s{background:#555}button.d{background:#a33}
 #msg{white-space:pre-wrap}.ok{color:#72e28a}.bad{color:#ff7777}
 small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid #8a6d1d;border-radius:10px;padding:10px;margin-bottom:10px}.updateNotice.show{display:block}.updateNotice b{color:#ffd86b}
 </style></head><body>
-<div class="topbar"><h1>3x-ui Manager <small>v4.5.3</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
+<div class="topbar"><h1>3x-ui Manager <small>v4.5.4</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
 <section><div id="updateNotice" class="updateNotice"></div><div id="panelInfo" style="margin-bottom:8px">3x-ui: проверка…</div><div class="toolbar">
 <button onclick="load()">Обновить</button>
 <button onclick="newClient()">+ Клиент</button>
@@ -78,7 +78,7 @@ function setLang(v){LANG=v==='en'?'en':'ru';localStorage.setItem('3xui-manager-l
 function applyLang(){
   let sel=$('lang');if(sel)sel.value=LANG;
   document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=tr(e.dataset.i18n)});
-  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.2</small>';
+  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.4</small>';
   let hs=document.querySelectorAll('section h2');if(hs[0])hs[0].innerHTML=tr('Клиенты')+' <small id="count"></small>';if(hs[1])hs[1].textContent=tr("Inbound'ы"); translateVisible();
 }
 
