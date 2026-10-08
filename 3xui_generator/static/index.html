@@ -8,7 +8,7 @@ section{background:#1b1b1b;padding:14px;margin:10px 0;border-radius:12px}
 h1{font-size:22px;margin:4px 0 14px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}.lang{font-size:13px;color:#aaa}.lang select{margin:0;padding:6px}h2{font-size:18px;margin:0 0 10px}
 button,input,select{padding:9px;border-radius:8px;border:1px solid #4a4a4a;background:#111;color:#eee;margin:3px}
 button{cursor:pointer;background:#3478f6;border:0}button:disabled{opacity:.45;cursor:not-allowed}
-button.s{background:#555}button.d{background:#a33}
+button.s{background:#3478f6}button.s[data-enable="true"]{background:#2e8b57}button.s[data-enable="false"]{background:#b06a00}button.d{background:#a33}
 .toolbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.status{margin-left:auto}
 .client{background:#242424;border-radius:12px;padding:12px;margin:8px 0}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
@@ -20,7 +20,7 @@ button.s{background:#555}button.d{background:#a33}
 #msg{white-space:pre-wrap}.ok{color:#72e28a}.bad{color:#ff7777}
 small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid #8a6d1d;border-radius:10px;padding:10px;margin-bottom:10px}.updateNotice.show{display:block}.updateNotice b{color:#ffd86b}
 </style></head><body>
-<div class="topbar"><h1>3x-ui Manager <small>v4.5.4</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
+<div class="topbar"><h1>3x-ui Manager <small>v4.5.5</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
 <section><div id="updateNotice" class="updateNotice"></div><div id="panelInfo" style="margin-bottom:8px">3x-ui: проверка…</div><div class="toolbar">
 <button onclick="load()">Обновить</button>
 <button onclick="newClient()">+ Клиент</button>
@@ -78,7 +78,7 @@ function setLang(v){LANG=v==='en'?'en':'ru';localStorage.setItem('3xui-manager-l
 function applyLang(){
   let sel=$('lang');if(sel)sel.value=LANG;
   document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=tr(e.dataset.i18n)});
-  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.4</small>';
+  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.5</small>';
   let hs=document.querySelectorAll('section h2');if(hs[0])hs[0].innerHTML=tr('Клиенты')+' <small id="count"></small>';if(hs[1])hs[1].textContent=tr("Inbound'ы"); translateVisible();
 }
 
