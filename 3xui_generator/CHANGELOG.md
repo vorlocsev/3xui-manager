@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.6.1 - 2026-10-08
+
+- Redesigned the creation wizard into a compact 4-step mobile-friendly flow.
+- Added visual scenario cards, traffic presets, compact forms and a review screen.
+- Improved the final result screen with direct Copy, Telegram and QR actions.
+- Bumped the Home Assistant App version to 4.6.1.
+
+
 ## 4.6.0 - 2026-10-08
 
 - Added a step-by-step client creation wizard.
