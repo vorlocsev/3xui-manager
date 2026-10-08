@@ -2,7 +2,7 @@
 
 Home Assistant App for managing a remote **3x-ui 3.9.x** panel with a focused **VLESS Reality** workflow.
 
-**Current version: 4.5.2**
+**Current version: 4.5.3**
 
 ## What it does
 
