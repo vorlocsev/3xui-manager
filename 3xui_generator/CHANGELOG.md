@@ -2,6 +2,9 @@
 
 ## 4.5.3 - 2026-10-08
 
+- Fixed client action buttons by replacing fragile inline handlers with delegated click handling.
+- Client action buttons now reliably pass the client email to the backend and remain compatible with Ingress.
+
 - Fixed stable 3x-ui update detection to use the official `currentVersion`, `latestVersion` and `updateAvailable` fields.
 - Added polling of the native 3x-ui update status using the returned update run ID.
 - Added explicit success/failure feedback for panel updates.
