@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.5.4 - 2026-10-08
+
+- Fixed the visible app version in the language-switch refresh path (it was still showing 4.5.2).
+- Bumped the Home Assistant App version to 4.5.4 for a clean update from 4.5.3.
+
 ## 4.5.3 - 2026-10-08
 
 - Fixed client action buttons by replacing fragile inline handlers with delegated click handling.
