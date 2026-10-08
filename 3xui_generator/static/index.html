@@ -20,11 +20,11 @@ button.s{background:#3478f6}button.s[data-enable="true"]{background:#2e8b57}butt
 #msg{white-space:pre-wrap}.ok{color:#72e28a}.bad{color:#ff7777}
 small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid #8a6d1d;border-radius:10px;padding:10px;margin-bottom:10px}.updateNotice.show{display:block}.updateNotice b{color:#ffd86b}
 </style></head><body>
-<div class="topbar"><h1>3x-ui Manager <small>v4.5.5</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
+<div class="topbar"><h1>3x-ui Manager <small>v4.6.0</small></h1><label class="lang">🌐 <select id="lang" onchange="setLang(this.value)"><option value="ru">Русский</option><option value="en">English</option></select></label></div>
 <section><div id="updateNotice" class="updateNotice"></div><div id="panelInfo" style="margin-bottom:8px">3x-ui: проверка…</div><div class="toolbar">
 <button onclick="load()">Обновить</button>
 <button onclick="newClient()">+ Клиент</button>
-<button onclick="newSetup()">+ Inbound + клиент</button>
+<button onclick="openWizard()">🧙 Мастер создания</button>
 <button class="s" onclick="newInbound()">Inbound</button>
 <span id="st" class="status"></span>
 </div></section>
@@ -35,7 +35,7 @@ small{color:#999}.updateNotice{display:none;background:#3a2f08;border:1px solid 
 
 const I18N={
 ru:{
-'Обновить':'Обновить','+ Клиент':'+ Клиент','+ Inbound + клиент':'+ Inbound + клиент','Inbound':'Inbound',
+'Обновить':'Обновить','+ Клиент':'+ Клиент','+ Inbound + клиент':'+ Inbound + клиент','🧙 Мастер создания':'🧙 Мастер создания','Inbound':'Inbound',
 'Клиенты':'Клиенты','Inbound\'ы':"Inbound'ы",'Загрузка…':'Загрузка…','Клиентов пока нет.':'Клиентов пока нет.','Inbound\'ов нет.':"Inbound'ов нет.",
 'без лимита':'без лимита','только что':'только что','мин назад':'мин назад','ч назад':'ч назад','дн назад':'дн назад',
 'Скопировать':'Скопировать','Telegram':'Telegram','QR':'QR','Выключить':'Выключить','Включить':'Включить','Удалить':'Удалить',
@@ -78,7 +78,7 @@ function setLang(v){LANG=v==='en'?'en':'ru';localStorage.setItem('3xui-manager-l
 function applyLang(){
   let sel=$('lang');if(sel)sel.value=LANG;
   document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=tr(e.dataset.i18n)});
-  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.5.5</small>';
+  let h=document.querySelector('h1');if(h)h.innerHTML='3x-ui Manager <small>v4.6.0</small>';
   let hs=document.querySelectorAll('section h2');if(hs[0])hs[0].innerHTML=tr('Клиенты')+' <small id="count"></small>';if(hs[1])hs[1].textContent=tr("Inbound'ы"); translateVisible();
 }
 
@@ -113,5 +113,77 @@ async function newClient(){try{let d=await api('/api/inbounds'),a=(d.obj||[]).fi
 async function createClient(){let b=$('createClBtn');b.disabled=true;try{let email=$('ce').value.trim(),iid=Number($('ci').value),custom=Number($('cgCustom').value),gb=custom>0?custom:Number($('cg').value);if(!email)throw Error('Укажи email');let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let d=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,inbound_id:iid,total_gb:gb,server_address:address})});links[email]=d.link;out('Клиент создан. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
 async function newSetup(){$('msg').innerHTML='<h3>Inbound + клиент</h3><input id="sr" placeholder="Название inbound" value="VLESS Reality"><input id="sp" type="number" value="443"><input id="ss" placeholder="SNI"><input id="sd" placeholder="Destination, например www.cloudflare.com:443"><input id="se" placeholder="Email клиента"><select id="sg"><option value="0">Без лимита</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select><input id="sgc" type="number" min="0" placeholder="Свой лимит, GB"><button id="setupBtn" onclick="createSetup()">Создать</button>'}
 async function createSetup(){let b=$('setupBtn');b.disabled=true;try{let cfg=await api('/api/settings'),address=cfg.server_address||prompt('Server address / domain');if(!address)throw Error('Не указан server address');let custom=Number($('sgc').value),gb=custom>0?custom:Number($('sg').value),p={remark:$('sr').value,port:Number($('sp').value),sni:$('ss').value,dest:$('sd').value,email:$('se').value,total_gb:gb,server_address:address};if(!p.remark||!p.port||!p.sni||!p.dest||!p.email)throw Error('Заполни все поля');let d=await api('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});links[p.email]=d.link;out('Inbound + клиент созданы. Теперь можно скопировать ссылку или отправить её через Telegram.');load()}catch(e){b.disabled=false;out('Ошибка: '+e.message)}}
+
+function openWizard(){
+  $('msg').innerHTML='<div class="wizard"><div class="row"><h3>🧙 '+tr('Мастер создания')+'</h3><small id="wizStep">1 / 4</small></div><div id="wizBody"></div><div class="actions" style="margin-top:12px"><button id="wizBack" class="s" onclick="wizBack()">← '+tr('Назад')+'</button><button id="wizNext" onclick="wizNext()">Далее →</button></div></div>';
+  window.WIZ={step:1,mode:'existing',inbounds:[],selected:null};
+  loadWizardInbounds();
+}
+async function loadWizardInbounds(){
+  try{
+    let d=await api('/api/inbounds'); WIZ.inbounds=(d.obj||[]).filter(x=>x.protocol==='vless'&&(x.streamSettings?.security==='reality'||x.streamSettings?.realitySettings));
+    renderWizard();
+  }catch(e){out('Ошибка: '+e.message)}
+}
+function wizData(){return WIZ.data||(WIZ.data={email:'',remark:'VLESS Reality',port:443,sni:'',dest:'',inbound_id:0,total_gb:100,custom_gb:'',days:30,ip_limit:0,hwid_limit:0})}
+function renderWizard(){
+  let d=wizData(),b=$('wizBody'); if(!b)return;
+  $('wizStep').textContent=WIZ.step+' / 4'; $('wizBack').style.display=WIZ.step===1?'none':'inline-block';
+  if(WIZ.step===1){
+    b.innerHTML='<p>'+tr('Что создать?')+'</p><label><input type="radio" name="wm" value="existing" '+(WIZ.mode==='existing'?'checked':'')+'> '+tr('Добавить клиента в существующий VLESS Reality')+'</label><br><label><input type="radio" name="wm" value="new" '+(WIZ.mode==='new'?'checked':'')+'> '+tr('Создать новый VLESS Reality + клиента')+'</label><div id="wizIb" style="margin-top:12px"></div>';
+    document.querySelectorAll('input[name="wm"]').forEach(x=>x.onchange=()=>{WIZ.mode=x.value;renderWizard()});
+    if(WIZ.mode==='existing'){
+      let opts=WIZ.inbounds.map(x=>'<option value="'+x.id+'">'+esc(x.remark)+' — :'+x.port+'</option>').join('');
+      $('wizIb').innerHTML=WIZ.inbounds.length?'<label>'+tr('Inbound')+'<br><select id="wi">'+opts+'</select></label>':'<small>'+tr('Нет VLESS Reality inbound. Выбери создание нового.')+'</small>';
+    }
+  }else if(WIZ.step===2){
+    b.innerHTML='<label>'+tr('Email клиента')+'<br><input id="we" placeholder="iPhone" value="'+esc(d.email)+'"></label><br><label>'+tr('Лимит трафика')+'<br><select id="wg"><option value="0">'+tr('Без лимита')+'</option><option value="10">10 GB</option><option value="30">30 GB</option><option value="50">50 GB</option><option value="100">100 GB</option><option value="200">200 GB</option><option value="500">500 GB</option><option value="1000">1000 GB</option></select></label> <input id="wc" type="number" min="0" placeholder="'+tr('Свой лимит, GB')+'" value="'+esc(d.custom_gb)+'"><br><label>'+tr('Срок, дней')+'<br><input id="wd" type="number" min="0" value="'+d.days+'" placeholder="30"></label><br><label>'+tr('Лимит IP (0 = без лимита)')+'<br><input id="wip" type="number" min="0" value="'+d.ip_limit+'"></label><br><label>'+tr('Лимит устройств HWID (0 = без лимита)')+'<br><input id="whw" type="number" min="0" value="'+d.hwid_limit+'"></label>';
+    $('wg').value=d.custom_gb>0?'0':String(d.total_gb);
+  }else if(WIZ.step===3){
+    if(WIZ.mode==='existing'){
+      b.innerHTML='<h3>'+tr('Проверка')+'</h3><div class="meta">'+tr('Клиент будет добавлен в выбранный inbound. UUID и параметры клиента будут сгенерированы автоматически.')+'</div>';
+    }else{
+      b.innerHTML='<label>'+tr('Название inbound')+'<br><input id="wr" value="'+esc(d.remark)+'"></label><br><label>'+tr('Порт')+'<br><input id="wp" type="number" value="'+d.port+'"></label><br><label>'+tr('SNI')+'<br><input id="ws" placeholder="www.microsoft.com" value="'+esc(d.sni)+'"></label><br><label>'+tr('Destination')+'<br><input id="wdest" placeholder="www.microsoft.com:443" value="'+esc(d.dest)+'"></label><br><label>'+tr('Fingerprint')+'<br><select id="wf"><option value="chrome">chrome</option><option value="firefox">firefox</option><option value="safari">safari</option><option value="edge">edge</option></select></label><div class="meta">'+tr('Ключи Reality и Short ID будут сгенерированы автоматически.')+'</div>';
+    }
+  }else{
+    b.innerHTML='<h3>'+tr('Проверка и создание')+'</h3><div class="meta"><b>'+tr('Клиент')+':</b> '+esc(d.email)+'<br><b>'+tr('Режим')+':</b> '+(WIZ.mode==='new'?tr('Новый inbound + клиент'):tr('Существующий inbound + клиент'))+'<br><b>'+tr('Трафик')+':</b> '+(d.custom_gb>0?d.custom_gb+' GB':(d.total_gb?d.total_gb+' GB':tr('Без лимита')))+'<br><b>'+tr('Срок')+':</b> '+(d.days>0?d.days+' '+tr('дней'):tr('Без срока'))+'<br><b>'+tr('IP')+':</b> '+(d.ip_limit||tr('без лимита'))+' · <b>HWID:</b> '+(d.hwid_limit||tr('без лимита'))+'</div>';
+  }
+}
+function wizCollect(){
+  let d=wizData();
+  if(WIZ.step===1){
+    if(WIZ.mode==='existing'&&$('wi'))d.inbound_id=Number($('wi').value);
+    if(WIZ.mode==='existing'&&!d.inbound_id)throw Error('Выбери inbound');
+  }
+  if(WIZ.step===2){
+    d.email=$('we').value.trim(); if(!d.email)throw Error('Укажи email');
+    d.custom_gb=Number($('wc').value||0); d.total_gb=d.custom_gb>0?d.custom_gb:Number($('wg').value||0);
+    d.days=Math.max(0,Number($('wd').value||0)); d.ip_limit=Math.max(0,Number($('wip').value||0)); d.hwid_limit=Math.max(0,Number($('whw').value||0));
+  }
+  if(WIZ.step===3&&WIZ.mode==='new'){
+    d.remark=$('wr').value.trim()||'VLESS Reality'; d.port=Number($('wp').value||443); d.sni=$('ws').value.trim(); d.dest=$('wdest').value.trim(); d.fingerprint=$('wf').value;
+    if(!d.sni||!d.dest||!d.port)throw Error('Заполни SNI, Destination и порт');
+  }
+  WIZ.data=d;
+}
+function wizBack(){if(WIZ.step>1){WIZ.step--;renderWizard()}}
+async function wizNext(){
+  try{
+    wizCollect();
+    if(WIZ.step<4){WIZ.step++;renderWizard();return}
+    let b=$('wizNext');b.disabled=true;b.textContent=LANG==='en'?'Creating…':'Создание…';
+    let cfg=await api('/api/settings'),address=cfg.server_address||prompt(LANG==='en'?'Server address / domain':'Server address / домен');
+    if(!address)throw Error('Не указан server address');
+    let d=WIZ.data,r;
+    if(WIZ.mode==='new'){
+      r=await api('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({remark:d.remark,port:d.port,sni:d.sni,dest:d.dest,fingerprint:d.fingerprint,email:d.email,total_gb:d.total_gb,days:d.days,ip_limit:d.ip_limit,hwid_limit:d.hwid_limit,server_address:address})});
+    }else{
+      r=await api('/api/clients/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:d.email,inbound_id:d.inbound_id,total_gb:d.total_gb,days:d.days,ip_limit:d.ip_limit,hwid_limit:d.hwid_limit,server_address:address})});
+    }
+    links[d.email]=r.link; $('msg').innerHTML='<h3 class="ok">✓ '+tr('Готово')+'</h3><div class="linkbox" style="display:block"><b>'+esc(d.email)+'</b><br><br>'+esc(r.link)+'<br><div class="actions" style="margin-top:8px"><button onclick="copyLink(\''+esc(d.email).replace(/'/g,"\\\\'")+'\')">📋 '+tr('Скопировать')+'</button><button onclick="telegram(\''+esc(d.email).replace(/'/g,"\\\\'")+'\')">✈ Telegram</button><button onclick="showWizardQr(\''+esc(d.email).replace(/'/g,"\\\\'")+'\')">▦ QR</button></div><div id="wizQr"></div></div>'; load();
+  }catch(e){b&& (b.disabled=false);if($('wizNext'))$('wizNext').textContent='Далее →';out('Ошибка: '+e.message)}
+}
+async function showWizardQr(email){try{let l=await getLink(email),q=await api('/api/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({link:l})});$('wizQr').innerHTML='<img alt="QR" style="width:280px;max-width:100%;margin-top:10px" src="data:image/png;base64,'+q.png_base64+'>'}catch(e){out('Ошибка: '+e.message)}}
+
 applyLang();load();setInterval(()=>loadClients().catch(()=>{}),15000);setInterval(()=>panelInfo().catch(()=>{}),60000);
 </script></body></html>
