@@ -1,5 +1,5 @@
 name: 3x-ui Manager
-version: 4.5.3
+version: 4.5.4
 slug: 3xui_manager
 description: Home Assistant App for managing remote 3x-ui VLESS Reality inbounds, clients and subscriptions.
 url: https://github.com/vorlocsev/3xui-manager
