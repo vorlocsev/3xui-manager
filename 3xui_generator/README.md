@@ -2,12 +2,14 @@
 
 Home Assistant App for managing remote **3x-ui VLESS Reality** inbounds, clients and subscriptions.
 
-**Current version: 4.2.0**
+**Current version: 4.5.3**
 
 ## Highlights
 
 - Home Assistant Ingress
 - Remote 3x-ui API
+- RU / EN web interface
+- 3x-ui stable update detection and update-status monitoring
 - VLESS Reality inbound creation
 - Client management
 - Enable/disable
