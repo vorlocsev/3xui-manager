@@ -2,7 +2,7 @@
 
 Home Assistant App for managing remote **3x-ui VLESS Reality** inbounds, clients and subscriptions.
 
-**Current version: 4.5.3**
+**Current version: 4.6.0**
 
 ## Highlights
 
